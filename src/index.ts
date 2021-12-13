@@ -26,12 +26,25 @@ const handleMutation = (query: DocumentNode): ExportedHandlerFetchHandler<Worker
 };
 
 const handleQuery = (query: DocumentNode): ExportedHandlerFetchHandler<WorkerEnv> => async (request, env, ctx) => {
+  const queryString = print(query);
+  const cachedResponse = await env.RESPONSES.get(queryString);
+
+  if (cachedResponse) {
+    console.log("CACHHEEE")
+    return new Response(cachedResponse, {
+      headers: {
+        "Content-Type": "application/json",
+        "x-cache-hit": "true",
+      },
+    });
+  }
+
   const newResponse = await fetch(new Request(DESTINATION, request));
 
-  const newJson: any = await newResponse.clone().json();
+  const newJson = await newResponse.clone().json<any>();
   if (newResponse.ok && !("error" in newJson)) {
     console.log("CACHING QUERY");
-    await env.RESPONSES.put(print(query), JSON.stringify(newJson));
+    await env.RESPONSES.put(queryString, JSON.stringify(newJson));
   }
 
   return newResponse;
