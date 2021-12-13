@@ -1,4 +1,4 @@
-import { parse } from "graphql";
+import { parse, Kind } from "graphql";
 
 type WorkerEnv = { RESPONSES: KVNamespace; TYPENAMES: KVNamespace };
 
@@ -16,7 +16,11 @@ const fetchFn: ExportedHandlerFetchHandler<WorkerEnv> = async (
 
   const document = parse(body.query);
 
-  console.log(document)
+  const isQuery = document.definitions.some(node => node.kind === Kind.OPERATION_DEFINITION && node.operation === "query"); 
+  
+  console.log(isQuery)
+
+
   // return null as any;
   return fetch(new Request(DESTINATION, request));
 };
