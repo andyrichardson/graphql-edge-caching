@@ -1,4 +1,4 @@
-import { parse, Kind, DocumentNode } from "graphql";
+import { parse, print, Kind, DocumentNode } from "graphql";
 
 type WorkerEnv = { RESPONSES: KVNamespace; TYPENAMES: KVNamespace };
 
@@ -22,12 +22,19 @@ const fetchFn: ExportedHandlerFetchHandler<WorkerEnv> = async (
 };
 
 const handleMutation = (query: DocumentNode): ExportedHandlerFetchHandler<WorkerEnv> => (request, env, ctx) => {
-
   return fetch(new Request(DESTINATION, request));
 };
 
-const handleQuery = (query: DocumentNode): ExportedHandlerFetchHandler<WorkerEnv> => (request, env, ctx) => {
-  return fetch(new Request(DESTINATION, request));
+const handleQuery = (query: DocumentNode): ExportedHandlerFetchHandler<WorkerEnv> => async (request, env, ctx) => {
+  const newResponse = await fetch(new Request(DESTINATION, request));
+
+  const newJson: any = await newResponse.clone().json();
+  if (newResponse.ok && !("error" in newJson)) {
+    console.log("CACHING QUERY");
+    await env.RESPONSES.put(print(query), JSON.stringify(newJson));
+  }
+
+  return newResponse;
 }
 
 export default {
