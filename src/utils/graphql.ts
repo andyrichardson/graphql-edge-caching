@@ -4,7 +4,7 @@ import { Kind, ASTNode, DocumentNode, visit } from "graphql";
 const compose = <T>(...fns: Array<(arg: T) => T>) => (arg: T) =>
   fns.reduce((res, fn) => fn(res), arg);
 
-const addTypenameToSelectionSets = (query: DocumentNode): DocumentNode =>
+export const addTypenameToSelectionSets = (query: DocumentNode): DocumentNode =>
   visit(query, {
     SelectionSet: (node) => {
       if (node.selections.some(n => n.kind === Kind.FIELD && n.name.value === "__typename")) {
