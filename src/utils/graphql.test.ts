@@ -2,7 +2,7 @@ import { visit, parse, FragmentDefinitionNode } from "graphql";
 import { extractTypenames, normalizeQuery } from "./graphql";
 
 describe("on normalize query string", () => {
-  describe.skip("on missing __typename in selection set", () => {
+  describe("on missing __typename in selection set", () => {
     const query = parse(`
       query {
         id
