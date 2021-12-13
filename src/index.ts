@@ -1,5 +1,6 @@
 import { parse, print, Kind, DocumentNode } from "graphql";
-import { addTypenameToSelectionSets } from './utils'
+import { addTypenameToSelectionSets, extractTypenames, normalizeQuery } from './utils'
+
 type WorkerEnv = { RESPONSES: KVNamespace; TYPENAMES: KVNamespace };
 
 const DESTINATION = "https://fakeql.com/graphql/dc08e1b5d4eff78fd7f7e9deb656444f";
@@ -35,22 +36,34 @@ const handleQuery = (query: DocumentNode, body: any): ExportedHandlerFetchHandle
   const queryString = print(query);
   const cachedResponse = await env.RESPONSES.get(queryString);
 
-  if (cachedResponse) {
-    console.log("CACHHEEE")
-    return new Response(cachedResponse, {
-      headers: {
-        "Content-Type": "application/json",
-        "x-cache-hit": "true",
-      },
-    });
-  }
+  // if (cachedResponse) {
+  //   console.log("CACHHEEE")
+  //   return new Response(cachedResponse, {
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //       "x-cache-hit": "true",
+  //     },
+  //   });
+  // }
 
-  const newResponse = await fetch(new Request(DESTINATION, request));
+  const newResponse = await fetch(new Request(DESTINATION, {
+    ...request,
+    body: JSON.stringify({
+      ...body,
+      query: print(normalizeQuery(query)),
+    }),
+  }));
 
   const newJson = await newResponse.clone().json<any>();
   if (newResponse.ok && !("error" in newJson)) {
     console.log("CACHING QUERY");
-    await env.RESPONSES.put(queryString, JSON.stringify(newJson));
+    ctx.waitUntil(Promise.all([
+      env.RESPONSES.put(queryString, JSON.stringify(newJson)),
+      ...extractTypenames(newJson).map(async (t) => {
+        const prev = JSON.parse(await env.TYPENAMES.get(t) || "[]");
+        return env.TYPENAMES.put(t, JSON.stringify([...prev, queryString]))
+      })
+    ]));
   }
 
   return newResponse;

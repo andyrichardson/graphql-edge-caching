@@ -1,7 +1,13 @@
-name = "edge-cache"
+name = "graphql-edge-caching"
 type = "javascript"
 compatibility_date = "2021-11-29"
 workers_dev = true
+
+kv_namespaces = [
+  { binding = "RESPONSES", id = "f485b1e49fbb452e9b397c38623c4a94", preview_id = "f485b1e49fbb452e9b397c38623c4a94" },
+  { binding = "TYPENAMES", id = "06f4b3c6249d4e449a1a91ccb818f3e5", preview_id = "06f4b3c6249d4e449a1a91ccb818f3e5" }
+]
+
 
 [build]
 command = "npm run build"

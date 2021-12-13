@@ -1,6 +1,7 @@
 {
   "extends": "@tsconfig/node14/tsconfig.json",
   "compilerOptions": {
+    "lib": ["esnext"],
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "declaration": false,

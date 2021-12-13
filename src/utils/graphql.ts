@@ -29,4 +29,26 @@ export const addTypenameToSelectionSets = (query: DocumentNode): DocumentNode =>
 
 export const normalizeQuery = (query: DocumentNode): DocumentNode => addTypenameToSelectionSets(query);
 
-export const extractTypenames = (res: any): string[] => [];
+
+/** Return all typenames in a GraphQL response */
+export const extractTypenames = (res: any) => [
+  ...new Set(_extractTypenames(res)),
+];
+
+export const _extractTypenames = (res: any): string[] => {
+  if (res === null || typeof res !== "object") {
+    return [];
+  }
+
+  if (Array.isArray(res)) {
+    return res.map(_extractTypenames).flat();
+  }
+
+  return Object.entries(res).reduce<string[]>((acc, [key, value]) => {
+    if (key === "__typename") {
+      return [...acc, value as string];
+    }
+
+    return [...acc, ..._extractTypenames(value)];
+  }, []);
+};
